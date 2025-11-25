@@ -104,7 +104,6 @@ $display = mysqli_query($conn,"SELECT * FROM VENDOR");
                 <td><?php echo htmlspecialchars($row['VEN_RATING']); ?></td>
                     <td>
                         <form method="POST" action="menu_functions.php">
-                        <!--actions points to TOTAL.php because the change will happen there -->
                         <input type="hidden" name="vencode" value="<?php echo $row['VEN_ID']; ?>">
                         <button type="submit" name="Delete" style="color:red;">X</button>
                     </form>
