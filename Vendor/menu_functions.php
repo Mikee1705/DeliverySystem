@@ -12,7 +12,7 @@ $conn = new mysqli(
     $database);
 
 
-if(isset($_POST["add_vendor"])){
+if(isset($_POST["add_vendor"]) || isset($_POST["Update"])){
     
     $contact = $_POST["number"]?? '';
     $location = $_POST["location"]?? '';
@@ -32,8 +32,8 @@ if(isset($_POST["add_vendor"])){
         $errors[] = "Location is Required";
     } elseif(strlen($location) < 3){
         $errors[] = "Location Must be at least 3 Characters Long";
-    }  elseif (!preg_match('/^[a-zA-Z\s]+$/', $location)) {
-    $errors[] = "Location must contain letters only";
+    }  elseif (!preg_match('/^[a-zA-Z\s,]+$/', $location)) {
+        $errors[] = "Location must contain letters and commas only";
     }
     if(!empty($errors)){
         foreach($errors as $error){
@@ -41,7 +41,20 @@ if(isset($_POST["add_vendor"])){
         }
 
     }else{ 
-        if($rating ===''){
+        if (isset($_POST['Update'])) {
+        // UPDATE path
+        $Code = $_POST['vencode'] ?? null;
+        if ($Code != null) {
+            $conn->query(
+                "UPDATE VENDOR 
+                 SET VEN_PHONE_NUMBER = '$contact',
+                     VEN_LOCATION = '$location'
+                 WHERE VEN_ID = '$Code'"
+            );
+            echo "Data Updated Sucessfully";
+        }
+    } elseif (isset($_POST["add_vendor"])) {
+    if($rating ===''){
          $sim =  $conn->prepare("INSERT INTO vendor (VEN_PHONE_NUMBER, VEN_LOCATION) 
             VALUES (?,?)");
             $sim->bind_param("ss", $contact, $location);
@@ -50,10 +63,66 @@ if(isset($_POST["add_vendor"])){
         VALUES (?,?,?)");
 
         $sim->bind_param("sss", $contact, $location, $rating);
+            }
+            $sim->execute();
+            echo "Data Added Sucessfully";
         }
-    
-    $sim->execute();
-    echo "Data Added Sucessfully";
     }
 }
+
+if (isset($_POST['Delete'])) {
+    $Code = $_POST['vencode'] ?? null;
+    if ($Code) {
+        $sim = $conn->prepare("DELETE FROM VENDOR WHERE VEN_ID = ?");
+        $sim->bind_param("i", $Code);
+        $sim->execute();
+        $sim->close();
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit();
+    }
+}
+
+$display = mysqli_query($conn,"SELECT * FROM VENDOR");
 ?>
+<html>
+    <head>
+        <title>Vendors Table</title>
+    </head>
+    <body>
+        <table border = "1" cellpadding = "4" cellspacing = "0">
+        <tr>
+            <th>Vendor ID</th>
+            <th>Vendor Contact No.</th>
+            <th>Vendor Address</th>
+            <th>Vendor Rating</th>
+        </tr>
+            <?php while ($row = mysqli_fetch_array($display)) { ?>
+            <tr>
+                <td><?php echo htmlspecialchars($row['VEN_ID']); ?></td>
+                <td><?php echo htmlspecialchars($row['VEN_PHONE_NUMBER']); ?></td>
+                <td><?php echo htmlspecialchars($row['VEN_LOCATION']); ?></td>
+                <td><?php echo htmlspecialchars($row['VEN_RATING']); ?></td>
+                    <td>
+                        <form method="POST" action="menu_functions.php">
+                        <!--actions points to TOTAL.php because the change will happen there -->
+                        <input type="hidden" name="vencode" value="<?php echo $row['VEN_ID']; ?>">
+                        <button type="submit" name="Delete" style="color:red;">X</button>
+                    </form>
+                </td>
+            <td>
+                <form method="POST" action="menu_functions.php">
+                <input type="hidden" name="vencode" value="<?php echo $row['VEN_ID']; ?>">
+
+                <input type="text" name="number" value="<?php echo htmlspecialchars($row['VEN_PHONE_NUMBER']); ?>">
+
+                <input type="text" name="location" value="<?php echo htmlspecialchars($row['VEN_LOCATION']); ?>">
+                <button type="submit" name="Update" style="color:blue;">Update</button>
+                </form>
+            </td>
+        </tr>
+            <?php } ?>
+        </table>
+        <br>
+    <p><a href = "user.html"><button>Insert Again</button></a></p>
+    </body>
+</html>
