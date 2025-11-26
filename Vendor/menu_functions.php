@@ -27,7 +27,26 @@ if(isset($_POST["add_vendor"]) || isset($_POST["Update"])){
     }elseif(strlen($contact) != 11){
         $errors[] = "Phone Number must be Exactly 11 digits";
     }
-
+    //checks for duplicate phone numbers
+    if(empty($errors)){
+        $currentID = $_POST['vencode'] ?? null;
+        if($currentID){
+            $stmt = $conn -> prepare("SELECT VEN_ID FROM VENDOR 
+            WHERE VEN_PHONE_NUMBER = ? AND VEN_ID <> ?");
+            $stmt->bind_param("si", $contact, $currentID);
+        }else{
+            $stmt = $conn -> prepare("SELECT VEN_ID FROM VENDOR 
+            WHERE VEN_PHONE_NUMBER = ?");
+            $stmt->bind_param("s", $contact);
+            
+        } 
+        $stmt->execute();
+        $stmt->store_result();
+        if($stmt->num_rows > 0){
+            $errors[] = "Phone Number Already Exists";
+        }
+        $stmt->close();
+    }
     if($location === ''){
         $errors[] = "Location is Required";
     } elseif(strlen($location) < 3){
@@ -122,6 +141,6 @@ $display = mysqli_query($conn,"SELECT * FROM VENDOR");
             <?php } ?>
         </table>
         <br>
-    <p><a href = "user.html"><button>Insert Again</button></a></p>
+    <p><a href = "user.html"><button>Back</button></a></p>
     </body>
 </html>
