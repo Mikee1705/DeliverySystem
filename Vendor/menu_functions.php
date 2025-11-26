@@ -1,16 +1,7 @@
+
+
 <?php
-$servername = "localhost:3310";
-$username = "root";
-$password = "slippinjimmy23!";
-
-$database = "DeliverySystem";
-
-$conn = new mysqli(
-    $servername, 
-    $username, 
-    $password, 
-    $database);
-
+require_once __DIR__ . '/../database/connect.php';
 
 if(isset($_POST["add_vendor"]) || isset($_POST["Update"])){
     
