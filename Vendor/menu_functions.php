@@ -159,6 +159,12 @@ $display = mysqli_query($conn,"SELECT * FROM VENDOR");
                 <button type="submit" name="Update" style="color:blue;">Update</button>
                 </form>
             </td>
+            <td>
+            <form method="get" action="../Product/service.php">
+            <input type="hidden" name="ven_id" value="<?php echo $row['VEN_ID']; ?>">
+            <button type="submit">Products</button>
+    </form>
+</td>
         </tr>
             <?php } ?>
         </table>
