@@ -33,6 +33,7 @@
 
                     <button type = "submit" name = "add_product">Add Product</button>
             </form>
+            <p><a href = "function.php"><button>View Tables</button></a></p>
         </body>
 
 </html>
