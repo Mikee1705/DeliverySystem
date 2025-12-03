@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../database/connect.php';
 session_start();
 
 // ENABLE ALL MYSQL ERRORS (VERY IMPORTANT)
