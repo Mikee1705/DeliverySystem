@@ -104,7 +104,7 @@ if(isset($_POST["add_vendor"]) || isset($_POST["Update"])){
 if (isset($_POST['Delete'])) {
     $Code = $_POST['vencode'] ?? null;
     if ($Code) {
-        $sim = $conn->prepare("DELETE FROM VENDOR WHERE PRD_ID = ?");
+        $sim = $conn->prepare("DELETE FROM VENDOR WHERE VEN_ID = ?");
         $sim->bind_param("i", $Code);
         $sim->execute();
         $sim->close();

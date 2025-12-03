@@ -1,7 +1,7 @@
 <?php
 $servername = "localhost:3310";
 $username = "root";
-$password = "--Narri123//";
+$password = "slippinjimmy23!";
 
 $database = "DeliverySystem";
 

@@ -72,6 +72,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!$stmt->execute()) {
                     die("SQL ERROR: " . $stmt->error);
                 }
+                $updateQTY = $conn->prepare("
+                UPDATE PRODUCT
+                SET PRODUCT = PRD_QUANTITY - 1
+                WHERE PRD_ID = ? AND PRD_QUANTITY > 0
+                ");
+            $updateQTY->bind_param("i",$item['prd_id']);
+            $updateQTY->execute();
+            $updateQTY->close();
             }
 
             $stmt->close();
@@ -98,8 +106,8 @@ if (isset($_GET['ven_id'])) {
     $vendor_data = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
-
-    $stmt = $conn->prepare("SELECT * FROM PRODUCT WHERE VEN_ID = ? AND PRD_AVAILABILITY = 1");
+    // Fetch available products
+    $stmt = $conn->prepare("SELECT * FROM PRODUCT WHERE VEN_ID = ? AND PRD_AVAILABILITY = 1 AND PRD_QUANTITY > 0");
     $stmt->bind_param("i", $ven_id);
     $stmt->execute();
     $products_result = $stmt->get_result();
