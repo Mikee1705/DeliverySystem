@@ -2,26 +2,22 @@
 require_once __DIR__ . '/../database/connect.php';
 session_start();
 
-// ENABLE ALL MYSQL ERRORS (VERY IMPORTANT)
+
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 require_once __DIR__ . '/../database/connect.php'; 
 
-//some hardcoded values for testing / demo
+
 $current_cust_id = 1; 
 $commission_rate = 0.10; 
 $courier_id = 1;
 
-// Initialize cart
+
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    /* -------------------------
-       ADD TO CART
-    -------------------------- */
     if (isset($_POST['add_to_cart'])) {
         $item = [
             'prd_id' => $_POST['prd_id'],
@@ -33,27 +29,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_SESSION['cart'][] = $item;
     }
 
-    /* -------------------------
-       REMOVE ITEM
-    -------------------------- */
+
     if (isset($_POST['remove_item'])) {
         $index = $_POST['index_to_remove'];
         if (isset($_SESSION['cart'][$index])) {
             unset($_SESSION['cart'][$index]);
-            $_SESSION['cart'] = array_values($_SESSION['cart']); // reindex
+            $_SESSION['cart'] = array_values($_SESSION['cart']); 
         }
     }
 
-    /* -------------------------
-       CONFIRM ORDER
-    -------------------------- */
+
     if (isset($_POST['confirm_order'])) {
         if (!empty($_SESSION['cart'])) {
 
             $tip = (float)$_POST['tip_amount'];
             $method = $_POST['pay_method'];
 
-            // Prepared SQL statement (correct placeholders)
+
             $stmt = $conn->prepare("
                 INSERT INTO DELIVERY 
                 (CUST_ID, CRR_ID, PRD_ID, DEL_STATUS, PAY_METHOD, PAY_AMOUNT, PAY_TIP, PAY_COMMISSION) 
@@ -63,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             foreach ($_SESSION['cart'] as $item) {
                 $commission = $item['price'] * $commission_rate;
 
-                // Correct bind_param types (i = int, s = string, d = float/double)
+
                 $stmt->bind_param("iiisddd",
                     $current_cust_id,
                     $courier_id,
@@ -74,7 +66,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $commission
                 );
 
-                // Execute (and show error if any)
                 if (!$stmt->execute()) {
                     die("SQL ERROR: " . $stmt->error);
                 }
@@ -82,9 +73,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt->close();
 
-            // Clear cart & redirect
             $_SESSION['cart'] = [];
-            header("Location: delivery.html");
+            header("Location: /DeliverySystem/delivery/delivery.php");
             exit();
         }
     }
@@ -154,7 +144,7 @@ if (isset($_GET['ven_id'])) {
         <?php elseif ($view_mode == 'PRODUCT_LIST'): ?>
 
             <h3>Menu: <?php echo htmlspecialchars($vendor_data['VEN_NAME']); ?></h3>
-            <p><a href="customer.html">Start Over (Back to Vendors)</a></p>
+            <p><a href="customer.php">Start Over (Back to Vendors)</a></p>
 
             <table border="1" cellpadding="5">
                 <tr>
