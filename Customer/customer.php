@@ -45,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $tip = (float)$_POST['tip_amount'];
             $method = $_POST['pay_method'];
 
+            
 
             $stmt = $conn->prepare("
                 INSERT INTO DELIVERY 
@@ -55,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             foreach ($_SESSION['cart'] as $item) {
                 $commission = $item['price'] * $commission_rate;
 
+                
 
                 $stmt->bind_param("iiisddd",
                     $current_cust_id,
@@ -65,6 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $tip,
                     $commission
                 );
+
 
                 if (!$stmt->execute()) {
                     die("SQL ERROR: " . $stmt->error);
@@ -81,6 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt->close();
 
+
             $_SESSION['cart'] = [];
             header("Location: /DeliverySystem/delivery/delivery.php");
             exit();
@@ -95,7 +99,7 @@ if (isset($_GET['ven_id'])) {
     $view_mode = 'PRODUCT_LIST';
     $ven_id = $_GET['ven_id'];
 
-    // Fetch vendor info
+
     $stmt = $conn->prepare("SELECT * FROM VENDOR WHERE VEN_ID = ?");
     $stmt->bind_param("i", $ven_id);
     $stmt->execute();
