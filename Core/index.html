@@ -10,15 +10,15 @@
 <body>
     <h1>Welcome to QuickBites</h1>
     <h3>Create Account</h3>
-    <form action="../php/redirect.php" method="POST">
+    <form action="../php/redirect.php" method="POST" id="registrationForm">
         <fieldset>
             <legend>Information</legend>
             <label for="email">Email: </label>
-            <input type="text" name="email"><br>
+            <input type="text" name="email" required><br>
             <label for="password">Password: </label>
-            <input type="password" name="password"><br>
+            <input type="password" name="password" id="password" required><br>
             <label for="password">Enter Password again: </label>
-            <input type="password" name="password"><br>
+            <input type="password" id="confirm_password" required><br>
         </fieldset>
 
         <fieldset name="acc_types">
@@ -33,5 +33,37 @@
     <br>
     <a href="signIn.html">Already have an account? Sign in here</a>
 </body>
+
+<script>
+    // Validate password confirmation in real time and on submit
+    (function () {
+        const form = document.getElementById('registrationForm');
+        const pwd = document.getElementById('password');
+        const confirm = document.getElementById('confirm_password');
+
+        // Update validity message as user types
+        function validateMatch() {
+            if (confirm.value === '') {
+                confirm.setCustomValidity(''); // let required handle emptiness
+            } else if (pwd.value !== confirm.value) {
+                confirm.setCustomValidity('Passwords do not match');
+            } else {
+                confirm.setCustomValidity('');
+            }
+        }
+
+        pwd.addEventListener('input', validateMatch);
+        confirm.addEventListener('input', validateMatch);
+
+        // Extra guard on submit (prevents bypass)
+        form.addEventListener('submit', function (e) {
+            validateMatch();
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                form.reportValidity();
+            }
+        });
+    })();
+    </script>
 
 </html>
