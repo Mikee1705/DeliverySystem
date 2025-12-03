@@ -8,12 +8,62 @@ $current_cust_id = 1;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
     $order_time = $_POST['order_timestamp']; 
 
-    $stmt_cancel = $conn->prepare("UPDATE DELIVERY SET DEL_STATUS = 'Cancelled' WHERE DEL_TIMESTAMP = ? AND CUST_ID = ? AND DEL_STATUS = 'Pending'");
-    $stmt_cancel->bind_param("si", $order_time, $current_cust_id);
+    // First, get all products in the order that's being cancelled
+    $get_products_sql = "
+        SELECT PRD_ID, COUNT(*) as quantity 
+        FROM DELIVERY 
+        WHERE DEL_TIMESTAMP = ? AND CUST_ID = ? AND DEL_STATUS = 'Pending'
+        GROUP BY PRD_ID
+    ";
     
-    if ($stmt_cancel->execute()) {
+    $stmt_get = $conn->prepare($get_products_sql);
+    $stmt_get->bind_param("si", $order_time, $current_cust_id);
+    $stmt_get->execute();
+    $products = $stmt_get->get_result();
+    $stmt_get->close();
+
+    // Start transaction
+    $conn->begin_transaction();
+
+    try {
+        // 1. Update delivery status to Cancelled
+        $stmt_cancel = $conn->prepare("
+            UPDATE DELIVERY 
+            SET DEL_STATUS = 'Cancelled' 
+            WHERE DEL_TIMESTAMP = ? 
+            AND CUST_ID = ? 
+            AND DEL_STATUS = 'Pending'
+        ");
+        $stmt_cancel->bind_param("si", $order_time, $current_cust_id);
+        $stmt_cancel->execute();
+        $stmt_cancel->close();
+
+        // 2. Update product quantities
+        $stmt_update = $conn->prepare("
+            UPDATE PRODUCT 
+            SET PRD_QUANTITY = PRD_QUANTITY + ?,
+            PRD_AVAILABILITY = 1
+            WHERE PRD_ID = ?
+        ");
+
+        // For each product in the order, update its quantity
+        while ($product = $products->fetch_assoc()) {
+            $stmt_update->bind_param("ii", $product['quantity'], $product['PRD_ID']);
+            $stmt_update->execute();
+        }
+        
+        $stmt_update->close();
+
+        // Commit the transaction
+        $conn->commit();
+        
         header("Location: delivery.php"); 
         exit();
+        
+    } catch (Exception $e) {
+        // Rollback the transaction on error
+        $conn->rollback();
+        die("Error cancelling order: " . $e->getMessage());
     }
 }
 

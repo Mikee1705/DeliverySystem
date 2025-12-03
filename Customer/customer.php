@@ -72,11 +72,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!$stmt->execute()) {
                     die("SQL ERROR: " . $stmt->error);
                 }
-                $updateQTY = $conn->prepare("
+               $updateQTY = $conn->prepare("
                 UPDATE PRODUCT
-                SET PRODUCT = PRD_QUANTITY - 1
+                SET 
+                    PRD_QUANTITY = PRD_QUANTITY - 1,
+                    PRD_AVAILABILITY = CASE 
+                        WHEN (PRD_QUANTITY - 1) <= 0 THEN 0 
+                        ELSE 1 
+                    END
                 WHERE PRD_ID = ? AND PRD_QUANTITY > 0
-                ");
+            ");
             $updateQTY->bind_param("i",$item['prd_id']);
             $updateQTY->execute();
             $updateQTY->close();

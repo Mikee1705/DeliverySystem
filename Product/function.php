@@ -73,7 +73,7 @@ if(isset($_POST['add_product'])) {
              $result = $conn->query("SELECT * FROM PRODUCT WHERE PRD_ID = '$code'");
              $row = $result->fetch_assoc();
             if($code != null){
-               $prd_avail = $_POST['prd_avail'] ?? $row['PRD_AVAILABILITY'];
+               $prd_avail = $_POST['prd_avail'] ?? '0';
 
             // FIX: Keep old quantity if not entered
                $quantity = $_POST['quantity'] !== "" ? $_POST['quantity'] : $row['PRD_QUANTITY'];
