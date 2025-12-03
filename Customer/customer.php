@@ -1,5 +1,7 @@
 <?php
+require_once __DIR__ . '/../database/connect.php';
 session_start();
+
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
@@ -9,6 +11,7 @@ require_once __DIR__ . '/../database/connect.php';
 $current_cust_id = 1; 
 $commission_rate = 0.10; 
 $courier_id = 1;
+
 
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
@@ -31,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $index = $_POST['index_to_remove'];
         if (isset($_SESSION['cart'][$index])) {
             unset($_SESSION['cart'][$index]);
-            $_SESSION['cart'] = array_values($_SESSION['cart']); // reindex
+            $_SESSION['cart'] = array_values($_SESSION['cart']); 
         }
     }
 
@@ -43,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $method = $_POST['pay_method'];
 
             
+
             $stmt = $conn->prepare("
                 INSERT INTO DELIVERY 
                 (CUST_ID, CRR_ID, PRD_ID, DEL_STATUS, PAY_METHOD, PAY_AMOUNT, PAY_TIP, PAY_COMMISSION) 
@@ -53,6 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $commission = $item['price'] * $commission_rate;
 
                 
+
                 $stmt->bind_param("iiisddd",
                     $current_cust_id,
                     $courier_id,
@@ -143,7 +148,7 @@ if (isset($_GET['ven_id'])) {
         <?php elseif ($view_mode == 'PRODUCT_LIST'): ?>
 
             <h3>Menu: <?php echo htmlspecialchars($vendor_data['VEN_NAME']); ?></h3>
-            <p><a href="customer.html">Start Over (Back to Vendors)</a></p>
+            <p><a href="customer.php">Start Over (Back to Vendors)</a></p>
 
             <table border="1" cellpadding="5">
                 <tr>

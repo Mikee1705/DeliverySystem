@@ -6,7 +6,6 @@ if(isset($_POST["add_vendor"]) || isset($_POST["Update"])){
     $company = $_POST["company"]?? '';
     $contact = $_POST["number"]?? '';
     $location = $_POST["location"]?? '';
-    $rating = $_POST["rating"]?? '';
 
     $errors = [];
 
@@ -91,16 +90,11 @@ if(isset($_POST["add_vendor"]) || isset($_POST["Update"])){
             echo "Data Updated Sucessfully";
         }
     } elseif (isset($_POST["add_vendor"])) {
-    if($rating ===''){
-         $sim =  $conn->prepare("INSERT INTO vendor (VEN_NAME,VEN_PHONE_NUMBER, VEN_LOCATION) 
-            VALUES (?,?,?)");
-            $sim->bind_param("sss", $company,$contact, $location);
-    }else{
-        $sim =  $conn->prepare("INSERT INTO vendor (VEN_NAME,VEN_PHONE_NUMBER, VEN_LOCATION, VEN_RATING) 
-        VALUES (?,?,?,?)");
+        $sim =  $conn->prepare("INSERT INTO vendor (VEN_NAME,VEN_PHONE_NUMBER, VEN_LOCATION) 
+        VALUES (?,?,?)");
 
-        $sim->bind_param("ssss", $company,$contact, $location, $rating);
-            }
+        $sim->bind_param("sss", $company,$contact, $location);
+            
             $sim->execute();
             echo "Data Added Sucessfully";
         }
@@ -110,7 +104,7 @@ if(isset($_POST["add_vendor"]) || isset($_POST["Update"])){
 if (isset($_POST['Delete'])) {
     $Code = $_POST['vencode'] ?? null;
     if ($Code) {
-        $sim = $conn->prepare("DELETE FROM VENDOR WHERE VEN_ID = ?");
+        $sim = $conn->prepare("DELETE FROM VENDOR WHERE PRD_ID = ?");
         $sim->bind_param("i", $Code);
         $sim->execute();
         $sim->close();
@@ -132,7 +126,6 @@ $display = mysqli_query($conn,"SELECT * FROM VENDOR");
             <th>Company Name</th>
             <th>Vendor Contact No.</th>
             <th>Vendor Address</th>
-            <th>Vendor Rating</th>
         </tr>
             <?php while ($row = mysqli_fetch_array($display)) { ?>
             <tr>
@@ -140,7 +133,6 @@ $display = mysqli_query($conn,"SELECT * FROM VENDOR");
                 <td><?php echo htmlspecialchars($row['VEN_NAME']); ?></td>
                 <td><?php echo htmlspecialchars($row['VEN_PHONE_NUMBER']); ?></td>
                 <td><?php echo htmlspecialchars($row['VEN_LOCATION']); ?></td>
-                <td><?php echo htmlspecialchars($row['VEN_RATING']); ?></td>
                     <td>
                         <form method="POST" action="menu_functions.php">
                         <input type="hidden" name="vencode" value="<?php echo $row['VEN_ID']; ?>">
@@ -163,8 +155,8 @@ $display = mysqli_query($conn,"SELECT * FROM VENDOR");
             <form method="get" action="../Product/service.php">
             <input type="hidden" name="ven_id" value="<?php echo $row['VEN_ID']; ?>">
             <button type="submit">Products</button>
-    </form>
-</td>
+     </form>
+        </td>
         </tr>
             <?php } ?>
         </table>
