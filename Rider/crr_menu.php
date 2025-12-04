@@ -73,8 +73,11 @@ $display = $conn->prepare("
         C.CUST_LOCATION, 
         D.DEL_STATUS, 
         D.DEL_TIMESTAMP,
-        D.PAY_METHOD,
-        GROUP_CONCAT(P.PRD_NAME SEPARATOR '\n') as ITEMS_BOUGHT
+        /* CALCULATE QUANTITY HERE */
+        GROUP_CONCAT(
+            CONCAT(P.PRD_NAME, ' (x', ROUND(D.PAY_AMOUNT / P.PRD_PRICE), ')') 
+            SEPARATOR '\n'
+        ) as ITEMS_BOUGHT
     FROM
         DELIVERY AS D
     JOIN
@@ -106,7 +109,7 @@ $display->close();
         <title>Courier Menu</title>
         <style>
             table { width: 100%; border-collapse: collapse; }
-            th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+            th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; vertical-align: top; }
             .locked { color: gray; font-style: italic; }
             .status-done { color: green; font-weight: bold; }
             .status-cancel { color: red; font-weight: bold; }
@@ -140,6 +143,7 @@ $display->close();
                 <td><?php echo htmlspecialchars($row['CUST_PHONE_NUMBER']); ?></td>
                 <td><?php echo htmlspecialchars($row['PAY_METHOD']); ?></td>
                 <td><?php echo htmlspecialchars($row['CUST_LOCATION']); ?></td>
+                
                 <td><?php echo nl2br(htmlspecialchars($row['ITEMS_BOUGHT'])); ?></td>
 
                 <td>
