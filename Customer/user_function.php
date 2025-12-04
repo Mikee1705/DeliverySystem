@@ -48,6 +48,9 @@ if (isset($_POST["add_customer"]) || isset($_POST["Update"])){
         $errors[] = "Phone number is Required";
     }elseif(!ctype_digit($contact)){
         $errors[] = "Phone number must be numeric"; 
+    }elseif(substr($contact, 0, 2) !== '09'){ 
+        $errors[] = "Phone number must start with '09'"; 
+    }
     }elseif(strlen($contact) < 10 || strlen($contact) > 15){ 
         $errors[] = "Phone Number must be between 10 and 15 digits (Global Max Length)."; 
     }
