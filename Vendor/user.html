@@ -3,6 +3,7 @@
         <title>Vendors Table System</title>
     </head>
     <body>
+        <h1>Add New Vendor</h1>
         <form action="menu_functions.php" method="post">
             <div class="container">
                 <label for="company">Vendor name:</label>
@@ -14,9 +15,12 @@
             </div>
             <div class="container">
                 <label for="location">Location:</label>
-                <input type="text" id="location" name="location">
-            <button type="submit" name="add_vendor">Add</button>
+                <input type="text" id="location" name="location"><br><br>
+            <button type="submit" name="add_vendor">Add</button><br><br>
             <button type ="submit"name = "view_tables">View Tables</button>
+        </div>
         </form>
+
+        <a href="/DeliverySystem/Admin/admin.html"><button>Back to Admin</button></a>
     </body>
 </html>
