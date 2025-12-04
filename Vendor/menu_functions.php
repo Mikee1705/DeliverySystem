@@ -38,7 +38,7 @@ if(isset($_POST["add_vendor"]) || isset($_POST["Update"])){
     }
     if($contact === ''){
         $errors[] = "Phone number is Required";
-    }elseif(ctype_digit($contact)){
+    }elseif(!ctype_digit($contact)){
         $errors[] = "Phone number must be numeric";
     }elseif(strlen($contact) != 11){
         $errors[] = "Phone Number must be Exactly 11 digits";
