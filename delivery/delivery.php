@@ -2,7 +2,7 @@
 session_start();
 require_once __DIR__ . '/../database/connect.php'; 
 
-$current_cust_id = 1; 
+$current_cust_id = $_SESSION['current_cust_id']?? 2; 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
     $order_time = $_POST['order_timestamp']; 
@@ -81,6 +81,9 @@ $sql = "SELECT
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $current_cust_id);
 $stmt->execute();
+if (!$stmt->execute()) {
+    die("Error executing query: " . $stmt->error);
+}
 $result = $stmt->get_result();
 ?>
 

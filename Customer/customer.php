@@ -4,9 +4,11 @@ session_start();
 
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
-$current_cust_id = 1; 
+$current_cust_id = 2; //change
 $commission_rate = 0.10; 
-$courier_id = 1;
+$courier_id = 2;
+
+
 
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
@@ -83,12 +85,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_order'])) {
         $conn->begin_transaction();
 
         try {
+            $courier_assignments = [
+             2 => 2,  // customer 2 -> courier 2
+            // Add other customer -> courier mappings as needed
+            ];
+            $courier_id = $courier_assignments[$current_cust_id] ?? 1; 
 
             $stmtInsert = $conn->prepare("
                 INSERT INTO DELIVERY 
                 (CUST_ID, CRR_ID, PRD_ID, DEL_STATUS, PAY_METHOD, PAY_AMOUNT, PAY_TIP, PAY_COMMISSION) 
                 VALUES (?, ?, ?, 'Pending', ?, ?, ?, ?)
             ");
+            $stmtInsert->bind_param("iiisddd",
+                $current_cust_id,
+                $courier_id,  // This should be set to 2 for customer 2
+                $item['prd_id'],
+                $method,
+                $total_item_price,
+                $tip_per_item,
+                $commission
+            );
 
 
             $stmtUpdate = $conn->prepare("
@@ -116,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_order'])) {
 
                 $stmtInsert->bind_param("iiisddd",
                     $current_cust_id,
-                    $courier_id,
+                    $courier_id,           
                     $item['prd_id'],
                     $method,
                     $total_item_price,

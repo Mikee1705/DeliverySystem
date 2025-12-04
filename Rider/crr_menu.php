@@ -3,11 +3,12 @@ require_once __DIR__ . '/../database/connect.php';
 
 $errors = [];
 
+$courier_id = 2; //change
 if (isset($_POST["Update"])){
     
     $target_cust_id = $_POST['cust_id'] ?? null;
     $target_timestamp = $_POST['timestamp'] ?? null;
-    $new_status = trim($_POST['DEL_STATUS'] ?? '');
+    $new_status = trim($_POST['DEL_STATUS'] ?? ''); 
 
     $allowed_statuses = ['Pending', 'In-Transit', 'Delivered', 'Cancelled']; 
     
@@ -19,10 +20,12 @@ if (isset($_POST["Update"])){
         $check_stmt = $conn->prepare("
             SELECT DEL_STATUS 
             FROM DELIVERY 
-            WHERE CUST_ID = ? AND DEL_TIMESTAMP = ? 
+            WHERE CUST_ID = ? 
+            AND DEL_TIMESTAMP = ? 
+            AND CRR_ID = ?
             LIMIT 1
         ");
-        $check_stmt->bind_param("is", $target_cust_id, $target_timestamp);
+        $check_stmt->bind_param("isi", $target_cust_id, $target_timestamp, $courier_id);
         $check_stmt->execute();
         $check_result = $check_stmt->get_result();
         $current_data = $check_result->fetch_assoc();
@@ -48,9 +51,11 @@ if (isset($_POST["Update"])){
             $stmt = $conn->prepare("
                 UPDATE DELIVERY 
                 SET DEL_STATUS = ?
-                WHERE CUST_ID = ? AND DEL_TIMESTAMP = ?
+                WHERE CUST_ID = ? 
+                AND DEL_TIMESTAMP = ?
+                AND CRR_ID = ?
             ");
-            $stmt->bind_param("sis", $new_status, $target_cust_id, $target_timestamp);
+            $stmt->bind_param("sisi", $new_status, $target_cust_id, $target_timestamp, $courier_id);
             
             if ($stmt->execute()) {
                 header("Location: " . $_SERVER['PHP_SELF']); 
@@ -63,7 +68,6 @@ if (isset($_POST["Update"])){
     }
 }
 
-$courier_id = 1; 
 
 $display = $conn->prepare("
     SELECT
@@ -94,6 +98,7 @@ $display = $conn->prepare("
         C.CUST_PHONE_NUMBER, 
         C.CUST_LOCATION, 
         D.DEL_STATUS,
+        D.CRR_ID,
         D.PAY_METHOD
     ORDER BY 
         D.DEL_TIMESTAMP DESC
@@ -118,7 +123,7 @@ $display->close();
     </head>
     <body>
 
-        <h1>Courier Menu (Courier ID: <?php echo $courier_id; ?>)</h1>
+        <h1>My Deliveries (Courier ID: <?php echo $courier_id; ?>)</h1>
 
         <h2>Deliveries Assigned</h2>
         <table border="1" cellpadding="4" cellspacing="0">

@@ -170,7 +170,7 @@ if ($display === false) {
 
 <html>
     <head>
-        <title>Customer Table</title>
+        <title>Courier Tables</title>
         <style>
             table { width: 100%; border-collapse: collapse; }
             th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
