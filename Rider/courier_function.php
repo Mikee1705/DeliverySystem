@@ -164,30 +164,42 @@ $display = mysqli_query($conn,"SELECT * FROM CUSTOMER ORDER BY CUST_ID DESC");
         </style>
     </head>
     <body>
+        
+        <h2>Add New Courier</h2>
+        <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
+            <label>Name (A-Z only):</label> <input type="text" name="crrname" required><br>
+            <label>Phone (10-15 digits):</label> <input type="text" name="number" required><br>
+            <label>Location: </label> <input type="text" name="location" required><br>
+            <label>Vechile: </label> <input type="text" name="vechile"><br>
+            <label>Availability (true/false): </label> <input type="text" name="availability" value="true"><br>
+            <button type="submit" name="add_courier">Add Courier</button>
+        </form>
+        <hr>
 
-       <h1>Courier Menu</h1>
-
-        <h2>Current Customers</h2>
+        <h2>Current Courier</h2>
         <table border = "1" cellpadding = "4" cellspacing = "0">
         <tr>
-            <th>Customer ID</th>
-            <th>Customer Name</th>
-            <th>Customer Contact No.</th>
-            <th>Customer Location</th>
-            <th>Customer Order</th>
+            <th>Courier ID</th>
+            <th>Courier Name</th>
+            <th>Courier Contact No.</th>
+            <th>Courier Location</th>
+            <th>Courier Vechile</th>
+            <th>Courier Availability</th>
         </tr>
             <?php while ($row = mysqli_fetch_array($display)) { ?>
             <tr>
-                <td><?php echo htmlspecialchars($row['CUST_ID']); ?></td>
+                <td><?php echo htmlspecialchars($row['CRR_ID']); ?></td>
                 <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
-                <td><?php echo htmlspecialchars($row['CUST_NAME']); ?></td>
-                <td><?php echo htmlspecialchars($row['CUST_PHONE_NUMBER']); ?></td>
-                <td><?php echo htmlspecialchars($row['CUST_LOCATION']); ?></td>   
+                <td><?php echo htmlspecialchars($row['CRR_NAME']); ?></td>
+                <td><?php echo htmlspecialchars($row['CRR_PHONE_NUMBER']); ?></td>
+                <td><?php echo htmlspecialchars($row['CRR_LOCATION']);?></td>
+                <td><?php echo htmlspecialchars($row['CRR_VEHICLE']); ?></td>
+                <td><input type="text" name="availability" value="<?php echo htmlspecialchars($row['CRR_is_AVAILABLE']); ?>"></td>
                 <td><button type="submit" name="Update" style="color:blue;">Update</button></td>
                 </form>
                 <td>
-                    <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" onsubmit="return confirm('Are you sure you want to delete this customer?');">
-                    <input type="hidden" name="custcode" value="<?php echo htmlspecialchars($row['CUST_ID']); ?>">
+                    <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" onsubmit="return confirm('Are you sure you want to delete this courier?');">
+                    <input type="hidden" name="crrcode" value="<?php echo htmlspecialchars($row['CRR_ID']); ?>">
                     <button type="submit" name="Delete" style="color:red;">X</button>
                     </form>
                 </td>
