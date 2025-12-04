@@ -9,11 +9,24 @@
     <h1>Manage Database</h1>
     <fieldset>
         <p>Vendors</p>
-        <form action = "../Vendor/user.html" actions = "GET" >
-        <button type = "submit" name = "access">Vendor</button>
+        <form action = "../Vendor/menu_functions.php" actions = "GET" >
+        <button type = "submit" name = "access">Display Table</button>
         </form><br>
-        <p>Product</p>
-        <!--Insert in this format -->
+        <hr>
+        <p>Deliveries</p>
+        <form action = "../delivery/delivery.php" actions = "GET" >
+        <button type = "submit" name = "access">Display Table</button>
+        </form><br>
+        <hr>
+        <p>Customers</p>
+        <form action = "../Customer/customer.php" actions = "GET" >
+        <button type = "submit" name = "access">Display Table</button>
+        </form><br>
+        <hr>
+        <p>Couriers</p>
+        <form action = "../Rider/courier_function.php" actions = "GET" >
+        <button type = "submit" name = "access">Display Table</button>
+        </form><br>
     </fieldset>
 </body>
 </html>
