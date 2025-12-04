@@ -54,18 +54,37 @@ $courier_id = 1;
 // Using Prepared Statement for Read (Secure and efficient)
 $display = $conn->prepare("
     SELECT
-        C.CUST_ID, C.CUST_NAME, C.CUST_PHONE_NUMBER, C.CUST_LOCATION, C.CUST_ORDER, D.DEL_STATUS, D.DEL_ID
+        C.CUST_ID, 
+        C.CUST_NAME, 
+        C.CUST_PHONE_NUMBER, 
+        C.CUST_LOCATION, 
+        D.DEL_STATUS, 
+        D.DEL_ID,(
+        SELECT GROUP_CONCAT(P.PRD_NAME SEPARATOR '\n')
+        FROM DELIVERY AS D2
+        JOIN PRODUCT P ON D2.PRD_ID = P.PRD_ID
+        WHERE D2.DEL_ID = D.DEL_ID
+        GROUP BY D2.DEL_ID) as ITEMS_BOUGHT
     FROM
         CUSTOMER AS C
     JOIN
         DELIVERY AS D ON C.CUST_ID = D.CUST_ID
     WHERE
         D.CRR_ID = ?
+    GROUP BY D.DEL_ID, C.CUST_ID, C.CUST_NAME, C.CUST_PHONE_NUMBER
     ORDER BY D.DEL_TIMESTAMP DESC
 ");
+
+if ($display === false) {
+    die("Error preparing statement: " . $conn->error);
+}
+
 $display->bind_param("i", $courier_id);
-$display->execute();
-$display_result = $display->get_result(); 
+if(!$display->execute()){
+    die("Error: " . $display->error);
+}
+
+$display_result = $display->get_result();
 $display->close();
 ?>
 
@@ -98,8 +117,8 @@ $display->close();
                 <td><?php echo htmlspecialchars($row['CUST_NAME']); ?></td>
                 <td><?php echo htmlspecialchars($row['CUST_PHONE_NUMBER']); ?></td>
                 <td><?php echo htmlspecialchars($row['CUST_LOCATION']); ?></td>
-                <td><?php echo htmlspecialchars($row['CUST_ORDER']); ?></td>
-                
+                <td><?php echo nl2br(htmlspecialchars($row['ITEMS_BOUGHT'])); ?></td>
+
                 <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
                     <input type="hidden" name="del_id" value="<?php echo htmlspecialchars($row['DEL_ID']); ?>"> 
 
