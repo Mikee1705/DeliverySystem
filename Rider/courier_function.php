@@ -1,158 +1,171 @@
 <?php
-require_once __DIR__ . '/../database/connect.php'; 
+require_once __DIR__ . '/../database/connect.php';
 
-// Initialize errors array
 $errors = [];
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-// --- 2. Handle Form Submissions (Insert or Update) ---
-if (isset($_POST["add_customer"]) || isset($_POST["Update"])){
+    if (isset($_POST['update_courier'])) {
 
-    // 2A. Retrieve and Sanitize Inputs
-    $cust_id = $_POST['custcode'] ?? null;
-    $name = trim($_POST["cname"] ?? '');
-    $contact = trim($_POST["number"] ?? '');
+        $cid = $_POST['crrcode'] ?? null;
+        $availability = $_POST['availability'] ?? null;
+
+        if ($availability === null) {
+        $result = $conn->query("SELECT CRR_AVAILABILITY FROM COURIER WHERE CRR_ID = '$cid'");
+        $row = $result->fetch_assoc();
+        $availability = $row['CRR_AVAILABILITY'];
+        }
+
+        $stmt = $conn->prepare("
+            UPDATE COURIER
+            SET CRR_availability = ?
+            WHERE CRR_ID = ?
+        ");
+
+        $stmt->bind_param("ii", $availability, $cid);
+        $stmt->execute();
+
+        header("Location: " . $_SERVER['PHP_SELF']);
+        exit;
+    }
+}    
+
+if (isset($_POST["add_courier"])) {
+
+
+    $crr_id   = $_POST['crrcode'] ?? null;
+    $name     = trim($_POST["crrname"] ?? '');   
+    $contact  = trim($_POST["number"] ?? '');
     $location = trim($_POST["location"] ?? '');
-    $order = trim($_POST["order"] ?? ''); // Input variable for CUST_ORDER
+    $vehicle  = trim($_POST["vehicle"] ?? '');  
+    $availability = $_POST["availability"] ?? 0;
 
-    // 2B. Validation Checks (All fields must be checked for emptiness)
 
-    // Validate Name (CUST_NAME)
-    if($name === ''){
-        $errors[] = "Name Is Required";
-    }elseif(strlen($name) < 3){
-        $errors[] = "Name Must Have More Than 3 Characters";
-    }elseif (!preg_match('/^[a-zA-Z\s,]+$/', $name)) { 
-        $errors[] = "Name Must Contain letters and commas only (No numbers allowed)"; 
+
+    // Name
+    if ($name === '') {
+        $errors[] = "Name is required";
+    } elseif (strlen($name) < 3) {
+        $errors[] = "Name must have at least 3 characters";
+    } elseif (!preg_match('/^[a-zA-Z\s,]+$/', $name)) {
+        $errors[] = "Name must contain only letters and commas";
     }
 
-    // Check for duplicate names
-    if(empty($errors)){
-        $stmt = null;
-        if($cust_id){
-            $stmt = $conn -> prepare("SELECT CUST_ID FROM CUSTOMER 
-            WHERE CUST_NAME = ? AND CUST_ID <> ?");
-            $stmt->bind_param("si", $name, $cust_id);
-        }else{
-            $stmt = $conn -> prepare("SELECT CUST_ID FROM CUSTOMER 
-            WHERE CUST_NAME = ?");
+    // Duplicate NAME
+    if (empty($errors)) {
+        if ($crr_id) {
+            $stmt = $conn->prepare("SELECT CRR_ID FROM COURIER WHERE CRR_NAME = ? AND CRR_ID <> ?");
+            $stmt->bind_param("si", $name, $crr_id);
+        } else {
+            $stmt = $conn->prepare("SELECT CRR_ID FROM COURIER WHERE CRR_NAME = ?");
             $stmt->bind_param("s", $name);
-        } 
+        }
+
         $stmt->execute();
         $stmt->store_result();
-        if($stmt->num_rows > 0){
-            $errors[] = "Name Already Exists";
+
+        if ($stmt->num_rows > 0) {
+            $errors[] = "Courier name already exists";
         }
+
         $stmt->close();
     }
 
-    // Validate Phone Number (CUST_PHONE_NUMBER)
-    if($contact === ''){
-        $errors[] = "Phone number is Required";
-    }elseif(!ctype_digit($contact)){
-        $errors[] = "Phone number must be numeric";
-    }elseif(strlen($contact) != 11){ 
-        $errors[] = "Phone Number must be between 10 and 15 digits (Global Max Length)."; 
+    // Phone Number
+    if ($contact === '') {
+        $errors[] = "Phone number is required";
+    } elseif (!ctype_digit($contact)) {
+        $errors[] = "Phone must be numeric";
+    } elseif (!preg_match('/^09\d{9}$/', $contact)) {
+        $errors[] = "Phone number must start with 09 and be 11 digits long";
     }
 
-    // Check for duplicate phone numbers
-    if(empty($errors)){
-        $stmt = null;
-        if($cust_id){
-            $stmt = $conn -> prepare("SELECT CUST_ID FROM CUSTOMER 
-            WHERE CUST_PHONE_NUMBER = ? AND CUST_ID <> ?");
-            $stmt->bind_param("si", $contact, $cust_id);
-        }else{
-            $stmt = $conn -> prepare("SELECT CUST_ID FROM CUSTOMER 
-            WHERE CUST_PHONE_NUMBER = ?");
+
+    // Duplicate CONTACT
+    if (empty($errors)) {
+        if ($crr_id) {
+            $stmt = $conn->prepare("SELECT CRR_ID FROM COURIER WHERE CRR_PHONE_NUMBER = ? AND CRR_ID <> ?");
+            $stmt->bind_param("si", $contact, $crr_id);
+        } else {
+            $stmt = $conn->prepare("SELECT CRR_ID FROM COURIER WHERE CRR_PHONE_NUMBER = ?");
             $stmt->bind_param("s", $contact);
-        } 
+        }
+
         $stmt->execute();
         $stmt->store_result();
-        if($stmt->num_rows > 0){
-            $errors[] = "Phone Number Already Exists";
+
+        if ($stmt->num_rows > 0) {
+            $errors[] = "Phone number already exists";
         }
+
         $stmt->close();
     }
 
-    // Validate Location (CUST_LOCATION)
-    if($location === ''){
-        $errors[] = "Location is Required";
-    } elseif(strlen($location) < 3){
-        $errors[] = "Location Must be at least 3 Characters Long";
+    // Location
+    if ($location === '') {
+        $errors[] = "Location is required";
+    } elseif (strlen($location) < 3) {
+        $errors[] = "Location must be at least 3 characters long";
     } elseif (!preg_match('/^[a-zA-Z0-9\s,]+$/', $location)) {
         $errors[] = "Location must contain letters, numbers, and commas only";
     }
 
-    if ($order === '') {
-        $errors[] = "Order details are Required.";
-    } elseif (strlen($order) > 50) { // Checks the maximum length constraint
-        $errors[] = "Order details cannot exceed 50 characters";
-    }
 
-    // Display Errors or Proceed to Database
-    if(!empty($errors)){
-        foreach($errors as $error){
-            echo "<p style='color:red;'>Error: " . htmlspecialchars($error) ."</p>";
+    if (!empty($errors)) {
+        foreach ($errors as $error) {
+            echo "<p style='color:red;'>Error: " . htmlspecialchars($error) . "</p>";
+        }
+    } else{
+
+        $stmt = $conn->prepare("
+            INSERT INTO COURIER (CRR_NAME, CRR_PHONE_NUMBER, CRR_LOCATION, CRR_VEHICLE, CRR_AVAILABILITY)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+
+        $stmt->bind_param("ssssi", $name, $contact, $location, $vehicle, $availability);
+
+        if ($stmt->execute()) {
+            echo "<p style='color:green;'>Courier Added Successfully! ID: " . $conn->insert_id . "</p>";
+        } else {
+            echo "<p style='color:red;'>Error Adding Data: " . $stmt->error . "</p>";
         }
 
-    }else{ 
-        // --- SECURE Database Operations ---
-
-        if (isset($_POST['Update'])) {
-            // Using a secure Prepared Statement for UPDATE
-            $stmt = $conn->prepare("
-                UPDATE CUSTOMER 
-                SET CUST_NAME = ?, 
-                    CUST_PHONE_NUMBER = ?, 
-                    CUST_LOCATION = ?,
-                    CUST_ORDER = ?
-                WHERE CUST_ID = ?
-            ");
-            // 'ssssi' binds (Name, Phone, Location, Order, ID)
-            $stmt->bind_param("ssssi", $name, $contact, $location, $order, $cust_id);
-
-            if ($stmt->execute()) {
-                echo "<p style='color:blue;'>Data Updated Successfully.</p>";
-            } else {
-                echo "<p style='color:red;'>Error Updating Data: " . htmlspecialchars($stmt->error) . "</p>";
-            }
-            $stmt->close();
-
-        } elseif (isset($_POST["add_customer"])) {
-
-
-            $stmt = $conn->prepare("
-                INSERT INTO CUSTOMER (CUST_NAME, CUST_PHONE_NUMBER, CUST_LOCATION, CUST_ORDER) 
-                VALUES (?, ?, ?, ?)
-            ");
-            $stmt->bind_param("ssss", $name, $contact, $location, $order);
-
-            if ($stmt->execute()) {
-                echo "<p style='color:green;'>Data Added Successfully. ID: " . $conn->insert_id . "</p>";
-            } else {
-                 echo "<p style='color:red;'>Error Adding Data: " . htmlspecialchars($stmt->error) . "</p>";
-            }
-            $stmt->close();
-        }
+        $stmt->close();
     }
 }
 
-// --- 3. Handle Delete Operation (Secure) ---
+// ---------------- DELETE ----------------
 if (isset($_POST['Delete'])) {
-    $Code = $_POST['custcode'] ?? null;
+    $Code = $_POST['crrcode'] ?? null;
+
     if ($Code) {
-        $sim = $conn->prepare("DELETE FROM CUSTOMER WHERE CUST_ID = ?");
-        $sim->bind_param("i", $Code);
-        $sim->execute();
-        $sim->close();
-        // Redirect to prevent form re-submission on refresh
-        header("Location: " . $_SERVER['PHP_SELF']); 
+        $stmt = $conn->prepare("DELETE FROM COURIER WHERE CRR_ID = ?");
+        $stmt->bind_param("i", $Code);
+        $stmt->execute();
+        $stmt->close();
+
+        header("Location: " . $_SERVER['PHP_SELF']);
         exit();
     }
 }
 
 
-$display = mysqli_query($conn,"SELECT * FROM COURIER ORDER BY CRR_ID DESC");
+
+
+$sql = "SELECT 
+CRR_ID,
+CRR_NAME,
+CRR_PHONE_NUMBER,
+CRR_LOCATION,
+CRR_VEHICLE,
+CASE 
+    WHEN CRR_AVAILABILITY = 1 THEN 'YES'
+    ELSE 'NO'
+END AS CRR_AVAILABILITY
+FROM COURIER";
+$display = mysqli_query($conn, $sql);
+if ($display === false) {
+    die("Error in SQL query: " . mysqli_error($conn) . "<br>Query was: " . $sql);
+}
 ?>
 
 <html>
@@ -168,10 +181,15 @@ $display = mysqli_query($conn,"SELECT * FROM COURIER ORDER BY CRR_ID DESC");
         <h2>Add New Courier</h2>
         <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
             <label>Name (A-Z only):</label> <input type="text" name="crrname" required><br>
-            <label>Phone (10-15 digits):</label> <input type="text" name="number" required><br>
+            <label>Phone (11 digits):</label> <input type="text" name="number" required><br>
             <label>Location: </label> <input type="text" name="location" required><br>
-            <label>Vechile: </label> <input type="text" name="vechile"><br>
-            <label>Availability (true/false): </label> <input type="text" name="availability" value="true"><br>
+            <label>Vehicle: </label> <input type="text" name="vehicle"><br>
+            <label>Availability: </label>
+            <input type="radio" id="available_yes" name="availability" value="1" checked>
+            <label for="available_yes">Available</label>
+    
+            <input type="radio" id="available_no" name="availability" value="0">
+            <label for="available_no">Unavailable</label><br>
             <button type="submit" name="add_courier">Add Courier</button>
         </form>
         <hr>
@@ -183,7 +201,7 @@ $display = mysqli_query($conn,"SELECT * FROM COURIER ORDER BY CRR_ID DESC");
             <th>Courier Name</th>
             <th>Courier Contact No.</th>
             <th>Courier Location</th>
-            <th>Courier Vechile</th>
+            <th>Courier Vehicle</th>
             <th>Courier Availability</th>
         </tr>
             <?php while ($row = mysqli_fetch_array($display)) { ?>
@@ -194,8 +212,21 @@ $display = mysqli_query($conn,"SELECT * FROM COURIER ORDER BY CRR_ID DESC");
                 <td><?php echo htmlspecialchars($row['CRR_PHONE_NUMBER']); ?></td>
                 <td><?php echo htmlspecialchars($row['CRR_LOCATION']);?></td>
                 <td><?php echo htmlspecialchars($row['CRR_VEHICLE']); ?></td>
-                <td><input type="text" name="availability" value="<?php echo htmlspecialchars($row['CRR_is_AVAILABLE']); ?>"></td>
-                <td><button type="submit" name="Update" style="color:blue;">Update</button></td>
+                <td><?php echo htmlspecialchars($row['CRR_AVAILABILITY']); ?></td>
+                <td>
+               
+
+               <input type="hidden" name="crrcode" value="<?= $row['CRR_ID'] ?>">
+
+                <label>
+                   <input type="radio" name="availability" value="1"> Available
+                </label>
+
+                <label>
+                  <input type="radio" name="availability" value="0"> Unavailable
+                </label>
+                  <button type="submit" name="update_courier">Update</button>
+
                 </form>
                 <td>
                     <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>" onsubmit="return confirm('Are you sure you want to delete this courier?');">
@@ -208,5 +239,6 @@ $display = mysqli_query($conn,"SELECT * FROM COURIER ORDER BY CRR_ID DESC");
         </table>
         <br>
     <p><a href = "/DeliverySystem/Admin/admin.html"><button>Back</button></a></p>
+    <p><a href = "crr_menu.php"><button>View Deliveries</button></a></p>
     </body>
 </html>

@@ -73,6 +73,7 @@ $display = $conn->prepare("
         C.CUST_LOCATION, 
         D.DEL_STATUS, 
         D.DEL_TIMESTAMP,
+        D.PAY_METHOD,
         GROUP_CONCAT(P.PRD_NAME SEPARATOR '\n') as ITEMS_BOUGHT
     FROM
         DELIVERY AS D
@@ -88,7 +89,8 @@ $display = $conn->prepare("
         C.CUST_NAME, 
         C.CUST_PHONE_NUMBER, 
         C.CUST_LOCATION, 
-        D.DEL_STATUS
+        D.DEL_STATUS,
+        D.PAY_METHOD
     ORDER BY 
         D.DEL_TIMESTAMP DESC
 ");
@@ -120,6 +122,7 @@ $display->close();
             <th>Date/Time</th>
             <th>Customer</th>
             <th>Contact</th>
+            <th>Payment Method</th>
             <th>Location</th>
             <th>Order Items</th>
             <th>Current Status</th>
@@ -135,6 +138,7 @@ $display->close();
                 </td>
                 
                 <td><?php echo htmlspecialchars($row['CUST_PHONE_NUMBER']); ?></td>
+                <td><?php echo htmlspecialchars($row['PAY_METHOD']); ?></td>
                 <td><?php echo htmlspecialchars($row['CUST_LOCATION']); ?></td>
                 <td><?php echo nl2br(htmlspecialchars($row['ITEMS_BOUGHT'])); ?></td>
 
