@@ -73,6 +73,7 @@ $display = $conn->prepare("
         C.CUST_LOCATION, 
         D.DEL_STATUS, 
         D.DEL_TIMESTAMP,
+        D.PAY_METHOD,
         /* CALCULATE QUANTITY HERE */
         GROUP_CONCAT(
             CONCAT(P.PRD_NAME, ' (x', ROUND(D.PAY_AMOUNT / P.PRD_PRICE), ')') 
