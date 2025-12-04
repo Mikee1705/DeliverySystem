@@ -152,7 +152,7 @@ if (isset($_POST['Delete'])) {
 }
 
 
-$display = mysqli_query($conn,"SELECT * FROM CUSTOMER ORDER BY CUST_ID DESC");
+$display = mysqli_query($conn,"SELECT * FROM COURIER ORDER BY CRR_ID DESC");
 ?>
 
 <html>
@@ -207,6 +207,6 @@ $display = mysqli_query($conn,"SELECT * FROM CUSTOMER ORDER BY CUST_ID DESC");
             <?php } ?>
         </table>
         <br>
-    <p><a href = "user.html"><button>Back</button></a></p>
+    <p><a href = "/DeliverySystem/Admin/admin.html"><button>Back</button></a></p>
     </body>
 </html>

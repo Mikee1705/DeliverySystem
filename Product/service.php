@@ -49,5 +49,11 @@
         <button>View Tables</button>
     </a>
 </p>
+
+<div>
+    <hr>
+    <p>Back to Vendors</p>
+    <a href="/DeliverySystem/Vendor/menu_functions.php">Go back to menu</a>
+</div>
 </body>
 </html>

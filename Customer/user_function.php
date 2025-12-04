@@ -164,16 +164,6 @@ $display = mysqli_query($conn,"SELECT * FROM CUSTOMER ORDER BY CUST_ID DESC");
         </style>
     </head>
     <body>
-        
-        <h2>Add New Customer</h2>
-        <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
-            <label>Name (A-Z only):</label> <input type="text" name="cname" required><br>
-            <label>Phone (10-15 digits):</label> <input type="text" name="number" required><br>
-            <label>Location:</label> <input type="text" name="location" required><br>
-            <label>Order (Required):</label> <input type="text" name="order" required><br>
-            <button type="submit" name="add_customer">Add Customer</button>
-        </form>
-        <hr>
 
         <h2>Current Customers</h2>
         <table border = "1" cellpadding = "4" cellspacing = "0">
@@ -192,7 +182,6 @@ $display = mysqli_query($conn,"SELECT * FROM CUSTOMER ORDER BY CUST_ID DESC");
                 <td><input type="text" name="cname" value="<?php echo htmlspecialchars($row['CUST_NAME']); ?>" required></td>
                 <td><input type="text" name="number" value="<?php echo htmlspecialchars($row['CUST_PHONE_NUMBER']); ?>" required></td>
                 <td><input type="text" name="location" value="<?php echo htmlspecialchars($row['CUST_LOCATION']); ?>" required></td>
-                <td><input type="text" name="order" value="<?php echo htmlspecialchars($row['CUST_ORDER']); ?>" required></td>    
                 <td><button type="submit" name="Update" style="color:blue;">Update</button></td>
                 </form>
                 <td>
@@ -205,6 +194,6 @@ $display = mysqli_query($conn,"SELECT * FROM CUSTOMER ORDER BY CUST_ID DESC");
             <?php } ?>
         </table>
         <br>
-    <p><a href = "user.html"><button>Back</button></a></p>
+    <p><a href = "/DeliverySystem/Admin/admin.html"><button>Back</button></a></p>
     </body>
 </html>

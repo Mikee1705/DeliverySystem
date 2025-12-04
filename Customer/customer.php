@@ -133,6 +133,12 @@ if (isset($_GET['ven_id'])) {
     <h2>Welcome, Customer #<?php echo $current_cust_id; ?></h2>
 
     <div>
+        <h3>Check your Orders</h3>
+        <p><a href="/DeliverySystem/delivery/delivery.php">Go to Orders Page</a></p>
+        <hr>
+    </div>
+
+    <div>
 
         <?php if ($view_mode == 'VENDOR_LIST'): ?>
 
