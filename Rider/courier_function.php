@@ -205,11 +205,10 @@ $display = mysqli_query($conn,"SELECT * FROM COURIER ORDER BY CRR_ID DESC");
             <tr>
                 <td><?php echo htmlspecialchars($row['CRR_ID']); ?></td>
                 <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
-                <input type="hidden" name="crrcode" value="<?php echo htmlspecialchars($row['CRR_ID']); ?>">
-                <td><input type="text" name="crrname" value="<?php echo htmlspecialchars($row['CRR_NAME']); ?>" required></td>
-                <td><input type="text" name="number" value="<?php echo htmlspecialchars($row['CRR_PHONE_NUMBER']); ?>" required></td>
-                <td><input type="text" name="location" value="<?php echo htmlspecialchars($row['CRR_LOCATION']); ?>" required></td>
-                <td><input type="text" name="vechile" value="<?php echo htmlspecialchars($row['CRR_VECHILE']); ?>"></td>
+                <td><?php echo htmlspecialchars($row['CRR_NAME']); ?></td>
+                <td><?php echo htmlspecialchars($row['CRR_PHONE_NUMBER']); ?></td>
+                <td><?php echo htmlspecialchars($row['CRR_LOCATION']);?></td>
+                <td><?php echo htmlspecialchars($row['CRR_VEHICLE']); ?></td>
                 <td><input type="text" name="availability" value="<?php echo htmlspecialchars($row['CRR_is_AVAILABLE']); ?>"></td>
                 <td><button type="submit" name="Update" style="color:blue;">Update</button></td>
                 </form>
