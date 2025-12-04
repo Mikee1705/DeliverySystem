@@ -1,22 +1,20 @@
 <?php
 require_once __DIR__ . '/../database/connect.php'; 
 
-// Initialize errors array
 $errors = [];
 
-// --- 2. Handle Form Submissions (Insert or Update) ---
+
 if (isset($_POST["add_customer"]) || isset($_POST["Update"])){
 
-    // 2A. Retrieve and Sanitize Inputs
     $cust_id = $_POST['custcode'] ?? null;
     $name = trim($_POST["cname"] ?? '');
     $contact = trim($_POST["number"] ?? '');
     $location = trim($_POST["location"] ?? '');
-    $order = trim($_POST["order"] ?? ''); // Input variable for CUST_ORDER
+    $order = trim($_POST["order"] ?? ''); 
 
-    // 2B. Validation Checks (All fields must be checked for emptiness)
+
     
-    // Validate Name (CUST_NAME)
+
     if($name === ''){
         $errors[] = "Name Is Required";
     }elseif(strlen($name) < 3){
@@ -25,7 +23,7 @@ if (isset($_POST["add_customer"]) || isset($_POST["Update"])){
         $errors[] = "Name Must Contain letters and commas only (No numbers allowed)"; 
     }
     
-    // Check for duplicate names
+
     if(empty($errors)){
         $stmt = null;
         if($cust_id){
@@ -45,7 +43,7 @@ if (isset($_POST["add_customer"]) || isset($_POST["Update"])){
         $stmt->close();
     }
     
-    // Validate Phone Number (CUST_PHONE_NUMBER)
+
     if($contact === ''){
         $errors[] = "Phone number is Required";
     }elseif(!ctype_digit($contact)){
@@ -54,7 +52,7 @@ if (isset($_POST["add_customer"]) || isset($_POST["Update"])){
         $errors[] = "Phone Number must be between 10 and 15 digits (Global Max Length)."; 
     }
     
-    // Check for duplicate phone numbers
+
     if(empty($errors)){
         $stmt = null;
         if($cust_id){
@@ -73,8 +71,7 @@ if (isset($_POST["add_customer"]) || isset($_POST["Update"])){
         }
         $stmt->close();
     }
-    
-    // Validate Location (CUST_LOCATION)
+
     if($location === ''){
         $errors[] = "Location is Required";
     } elseif(strlen($location) < 3){
@@ -85,21 +82,21 @@ if (isset($_POST["add_customer"]) || isset($_POST["Update"])){
     
     if ($order === '') {
         $errors[] = "Order details are Required.";
-    } elseif (strlen($order) > 50) { // Checks the maximum length constraint
+    } elseif (strlen($order) > 50) { 
         $errors[] = "Order details cannot exceed 50 characters";
     }
 
-    // Display Errors or Proceed to Database
+
     if(!empty($errors)){
         foreach($errors as $error){
             echo "<p style='color:red;'>Error: " . htmlspecialchars($error) ."</p>";
         }
 
     }else{ 
-        // --- SECURE Database Operations ---
+
         
         if (isset($_POST['Update'])) {
-            // Using a secure Prepared Statement for UPDATE
+
             $stmt = $conn->prepare("
                 UPDATE CUSTOMER 
                 SET CUST_NAME = ?, 
@@ -108,7 +105,7 @@ if (isset($_POST["add_customer"]) || isset($_POST["Update"])){
                     CUST_ORDER = ?
                 WHERE CUST_ID = ?
             ");
-            // 'ssssi' binds (Name, Phone, Location, Order, ID)
+
             $stmt->bind_param("ssssi", $name, $contact, $location, $order, $cust_id);
             
             if ($stmt->execute()) {
@@ -120,7 +117,7 @@ if (isset($_POST["add_customer"]) || isset($_POST["Update"])){
 
         } elseif (isset($_POST["add_customer"])) {
             
-            // ✅ FIX: Simplified INSERT - CUST_ORDER is now always included
+
             $stmt = $conn->prepare("
                 INSERT INTO CUSTOMER (CUST_NAME, CUST_PHONE_NUMBER, CUST_LOCATION, CUST_ORDER) 
                 VALUES (?, ?, ?, ?)

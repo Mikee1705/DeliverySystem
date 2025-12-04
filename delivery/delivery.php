@@ -1,6 +1,5 @@
 <?php
 session_start();
-
 require_once __DIR__ . '/../database/connect.php'; 
 
 $current_cust_id = 1; 
@@ -8,71 +7,64 @@ $current_cust_id = 1;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_order'])) {
     $order_time = $_POST['order_timestamp']; 
 
-    // First, get all products in the order that's being cancelled
-    $get_products_sql = "
-        SELECT PRD_ID, COUNT(*) as quantity 
-        FROM DELIVERY 
-        WHERE DEL_TIMESTAMP = ? AND CUST_ID = ? AND DEL_STATUS = 'Pending'
-        GROUP BY PRD_ID
-    ";
-    
-    $stmt_get = $conn->prepare($get_products_sql);
-    $stmt_get->bind_param("si", $order_time, $current_cust_id);
-    $stmt_get->execute();
-    $products = $stmt_get->get_result();
-    $stmt_get->close();
-
-    // Start transaction
     $conn->begin_transaction();
 
     try {
-        // 1. Update delivery status to Cancelled
-        $stmt_cancel = $conn->prepare("
-            UPDATE DELIVERY 
-            SET DEL_STATUS = 'Cancelled' 
-            WHERE DEL_TIMESTAMP = ? 
-            AND CUST_ID = ? 
-            AND DEL_STATUS = 'Pending'
-        ");
+        $get_products_sql = "
+            SELECT D.PRD_ID, D.PAY_AMOUNT, P.PRD_PRICE
+            FROM DELIVERY D
+            JOIN PRODUCT P ON D.PRD_ID = P.PRD_ID
+            WHERE D.DEL_TIMESTAMP = ? AND D.CUST_ID = ? AND D.DEL_STATUS = 'Pending'
+        ";
+        
+        $stmt_get = $conn->prepare($get_products_sql);
+        $stmt_get->bind_param("si", $order_time, $current_cust_id);
+        $stmt_get->execute();
+        $products = $stmt_get->get_result();
+        $stmt_get->close();
+
+
+        $stmt_cancel = $conn->prepare("UPDATE DELIVERY SET DEL_STATUS = 'Cancelled' WHERE DEL_TIMESTAMP = ? AND CUST_ID = ? AND DEL_STATUS = 'Pending'");
         $stmt_cancel->bind_param("si", $order_time, $current_cust_id);
         $stmt_cancel->execute();
         $stmt_cancel->close();
 
-        // 2. Update product quantities
-        $stmt_update = $conn->prepare("
-            UPDATE PRODUCT 
-            SET PRD_QUANTITY = PRD_QUANTITY + ?,
-            PRD_AVAILABILITY = 1
-            WHERE PRD_ID = ?
-        ");
 
-        // For each product in the order, update its quantity
-        while ($product = $products->fetch_assoc()) {
-            $stmt_update->bind_param("ii", $product['quantity'], $product['PRD_ID']);
-            $stmt_update->execute();
+        $stmt_update = $conn->prepare("UPDATE PRODUCT SET PRD_QUANTITY = PRD_QUANTITY + ?, PRD_AVAILABILITY = 1 WHERE PRD_ID = ?");
+
+        while ($row = $products->fetch_assoc()) {
+            $qty_to_restore = 0;
+            if ($row['PRD_PRICE'] > 0) {
+                $qty_to_restore = round($row['PAY_AMOUNT'] / $row['PRD_PRICE']);
+            }
+
+            if ($qty_to_restore > 0) {
+                $stmt_update->bind_param("ii", $qty_to_restore, $row['PRD_ID']);
+                $stmt_update->execute();
+            }
         }
-        
         $stmt_update->close();
 
-        // Commit the transaction
         $conn->commit();
-        
-        header("Location: delivery.php"); 
+        header("Location: " . $_SERVER['PHP_SELF']); 
         exit();
         
     } catch (Exception $e) {
-        // Rollback the transaction on error
         $conn->rollback();
         die("Error cancelling order: " . $e->getMessage());
     }
 }
 
-//Logic: This query fetches all orders for the current customer, grouping them by order timestamp.
-// This is done to avoid listing each product separately for the same order.
 $sql = "SELECT 
-            GROUP_CONCAT(P.PRD_NAME SEPARATOR '\n') as ITEMS_BOUGHT, 
+            /* CONCATENATE NAME + CALCULATED QUANTITY */
+            /*Calculates the quantity of product by total_amount/price per item */
+            GROUP_CONCAT(
+                CONCAT(P.PRD_NAME, ' (x', ROUND(D.PAY_AMOUNT / P.PRD_PRICE), ')') 
+                SEPARATOR '\n'
+            ) as ITEMS_BOUGHT, 
+            
             SUM(D.PAY_AMOUNT) as TOTAL_PRODUCT_PRICE,              
-            MAX(D.PAY_TIP) as ORDER_TIP,                           
+            MAX(D.PAY_TIP) as ORDER_TIP,                       
             D.DEL_STATUS,
             D.DEL_TIMESTAMP,
             D.CRR_ID,
@@ -97,6 +89,12 @@ $result = $stmt->get_result();
 <head>
     <title>My Orders</title>
     <meta http-equiv="refresh" content="30"> 
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; vertical-align: top; }
+        th { background-color: #f2f2f2; }
+    </style> 
 </head>
 <body>
 
@@ -106,7 +104,7 @@ $result = $stmt->get_result();
 
     <hr>
 
-    <table border="1" cellpadding="10" cellspacing="0">
+    <table>
         <thead>
             <tr>
                 <th>Date Placed</th>
@@ -144,7 +142,15 @@ $result = $stmt->get_result();
                         </td>
 
                         <td>
-                            <?php echo htmlspecialchars($row['DEL_STATUS']); ?>
+                            <?php 
+                                $statusColor = 'black';
+                                if($row['DEL_STATUS'] == 'Pending') $statusColor = 'orange';
+                                if($row['DEL_STATUS'] == 'Cancelled') $statusColor = 'red';
+                                if($row['DEL_STATUS'] == 'Delivered') $statusColor = 'green';
+                            ?>
+                            <span style="color: <?php echo $statusColor; ?>; font-weight: bold;">
+                                <?php echo htmlspecialchars($row['DEL_STATUS']); ?>
+                            </span>
                         </td>
 
                         <td><?php echo $courier_info; ?></td>
@@ -153,12 +159,12 @@ $result = $stmt->get_result();
                             <?php if ($row['DEL_STATUS'] === 'Pending'): ?>
                                 <form method="POST" onsubmit="return confirm('Are you sure you want to cancel this entire order?');">
                                     <input type="hidden" name="order_timestamp" value="<?php echo $row['DEL_TIMESTAMP']; ?>">
-                                    <button type="submit" name="cancel_order">Cancel Order</button>
+                                    <button type="submit" name="cancel_order" style="cursor: pointer; color: red;">Cancel Order</button>
                                 </form>
                             <?php elseif ($row['DEL_STATUS'] === 'Cancelled'): ?>
-                                Cancelled
+                                <span style="color: grey;">Order Cancelled</span>
                             <?php else: ?>
-                                Cannot Cancel
+                                <span style="color: grey;">Cannot Cancel</span>
                             <?php endif; ?>
                         </td>
                     </tr>
