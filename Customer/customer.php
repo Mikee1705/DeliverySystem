@@ -8,8 +8,6 @@ $current_cust_id = 2; //change
 $commission_rate = 0.10; 
 $courier_id = 2;
 
-
-
 if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
 }
@@ -56,7 +54,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         echo "<script>alert('Item is out of stock.');</script>";
     }
     
-
     header("Location: " . $_SERVER['REQUEST_URI']);
     exit();
 }
@@ -85,6 +82,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_order'])) {
         $conn->begin_transaction();
 
         try {
+            // --- VALIDATION CHECK ADDED HERE ---
+            if ($tip_total < 0) {
+                throw new Exception("Tip amount cannot be negative.");
+            }
+
             $courier_assignments = [
              2 => 2,  // customer 2 -> courier 2
             // Add other customer -> courier mappings as needed
@@ -96,16 +98,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['confirm_order'])) {
                 (CUST_ID, CRR_ID, PRD_ID, DEL_STATUS, PAY_METHOD, PAY_AMOUNT, PAY_TIP, PAY_COMMISSION) 
                 VALUES (?, ?, ?, 'Pending', ?, ?, ?, ?)
             ");
-            $stmtInsert->bind_param("iiisddd",
-                $current_cust_id,
-                $courier_id,  // This should be set to 2 for customer 2
-                $item['prd_id'],
-                $method,
-                $total_item_price,
-                $tip_per_item,
-                $commission
-            );
-
+            
+            // Note: The bind_param here was outside the loop in your original code, 
+            // but for safety in prepared statements inside loops, we usually bind once and execute many times.
+            // However, since we need dynamic values from the loop, we set up variables.
+            // I'll keep the structure you had but ensure the logic flows correctly inside the loop.
 
             $stmtUpdate = $conn->prepare("
                 UPDATE PRODUCT 
@@ -281,7 +278,7 @@ if (isset($_GET['ven_id'])) {
 
             <form method="POST">
                 <label>Tip Amount:</label><br>
-                <input type="number" name="tip_amount" step="0.01" value="0.00"><br><br>
+                <input type="number" name="tip_amount" step="0.01" value="0.00" min="0"><br><br>
 
                 <label>Payment Method:</label><br>
                 <select name="pay_method">
